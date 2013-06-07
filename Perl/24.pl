@@ -4,31 +4,28 @@ use 5.016;
 use strict;
 use Data::Dumper;
 
-# 51/5-5*
-# 515/-5*
-# 5155/-*
 sub shuffle_cards
 {
-	return (@_) if (@_ == 1);
+	return [@_] if (@_ == 1);
 
 	my @ret;
 	for (0..$#_)
 	{
 		my @local_cards = @_;
 		my ($local_first_cards) = splice(@local_cards, $_, 1);
-		push @ret, map {$local_first_cards . $_} shuffle_cards(@local_cards);
+		push @ret, map {[$local_first_cards, @$_]} shuffle_cards(@local_cards);
 	}
 	return @ret;
 }
 
 sub calc_reverse_polish
 {
-	my $expr = shift;
+	my @exprs = @{$_[0]};
 	my @stack;
 
-	while ($expr)
+	while (@exprs)
 	{
-		my $chr = substr($expr, 0, 1, '');
+		my $chr = shift @exprs;
 		if ($chr =~ /\d/)
 		{
 			push @stack, $chr;
@@ -85,11 +82,11 @@ sub make_pattern
 {
 	my ($expr, $op) = @_;
 
-	my @exprs = split //, $expr;
+	my @exprs = @$expr;
 	my @ops = split //, $op;
-	("$exprs[0]$exprs[1]$ops[0]$exprs[2]$ops[1]$exprs[3]$ops[2]",
-	 "$exprs[0]$exprs[1]$exprs[2]$ops[0]$ops[1]$exprs[3]$ops[2]",
-	 "$exprs[0]$exprs[1]$exprs[2]$exprs[3]$ops[0]$ops[1]$ops[2]")
+	([$exprs[0], $exprs[1], $ops[0], $exprs[2], $ops[1], $exprs[3], $ops[2]],
+	 [$exprs[0], $exprs[1], $exprs[2], $ops[0], $ops[1], $exprs[3], $ops[2]],
+	 [$exprs[0], $exprs[1], $exprs[2], $exprs[3], $ops[0], $ops[1], $ops[2]]);
 }
 
 sub calc_dist
@@ -109,7 +106,7 @@ sub calc_dist
 			{
 				if (calc_reverse_polish($pattern) == $dist)
 				{
-					$ret{$pattern} = 1;
+					$ret{"@$pattern"} = 1;
 				}
 			}
 		}
@@ -124,4 +121,3 @@ sub calc_24
 }
 
 print Dumper(calc_24(@ARGV[0..3]));
-#print calc_reverse_polish($ARGV[0]);
