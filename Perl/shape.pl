@@ -11,16 +11,18 @@ use strict;
 
 sub last_digit { @_[0] % 10; }
 
-my $number = $ARGV[0];
-exit 0 if $number < 1;
+my $number = $ARGV[0] or exit 1;
 
+# first line
 say 1 x $number;
+# mid lines
 for my $line (2..$number-1)
 {
-	my @content;
-	$content[$_] = ' ' foreach (1..$number);
-	$content[1] = $content[$number] = $content[$line] =
-		$content[$number - $line + 1] = last_digit($line);
+	my @content = (undef, (' ') x $number);
+	$content[1] = $content[$number] =
+		$content[$line] = $content[-$line] = last_digit($line);
+
 	say join '', @content;
 }
+# last line
 say last_digit($number) x $number if $number > 1;
