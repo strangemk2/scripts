@@ -1,5 +1,5 @@
 #!/bin/sh
-#script for save and restore filestamp
+#script for save and restore file timestamp
 
 TIMEFILE="/tmp/pushftime"
 if [ ! -f $1 ]
