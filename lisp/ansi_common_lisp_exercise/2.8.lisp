@@ -1,18 +1,20 @@
-; 接受一个列表，并返回 a 在列表里所出现的次数。
+(defun point_recursive (n)
+  (if (> n 0)
+    (progn
+      (format t ".")
+      (point_recursive (- n 1)))))
 
-(defun atimes_recursive (lst)
+(defun point_iterator (n)
+  (do ((i n (- i 1)))
+    ((= i 0))
+    (format t ".")))
+
+(defun time_recursive (lst)
   (if (not (null lst))
-	(if (eql 'a (car lst))
-	  (+ 1 (atimes_recursive (cdr lst)))
-	  (atimes_recursive (cdr lst)))
-	0))
+    (+ 1 (time_recursive (cdr lst)))
+    0))
 
-(defun atimes_iterator (lst)
-  (let ((n 0))
-	(dolist (obj lst)
-	  (if (eql 'a obj)
-		(setf n (+ n 1))))
-	n))
+(point_recursive 10)
+(point_iterator 10)
 
-(atimes_recursive '(a b c a a b d a))
-(atimes_iterator '(a b c a a b d a))
+(time_recursive '(1 2 3))
