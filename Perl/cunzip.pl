@@ -1,3 +1,4 @@
+#!/usr/bin/perl
 # unzip with filename codepage convert.
 # don't work on specified Perl version
 
@@ -7,10 +8,14 @@ use IO::File;
 use Encode qw(from_to);
 use File::Basename;
 use File::Path qw(make_path);
+use Getopt::Std;
 
-my $zipfile = $ARGV[0];
-my $codepage_from = $ARGV[1] || "cp932";
-my $codepage_to = $ARGV[2] || "utf8";
+my %opts;
+getopts('lf:t:', \%opts);
+my $zipfile = shift @ARGV;
+die "Use: $0 [-l] [-f from_cp] [-t to_cp] filename." unless ($zipfile);
+my $codepage_from = $opts{f} || "cp932";
+my $codepage_to = $opts{t} || "utf8";
 
 my $u = new IO::Uncompress::Unzip $zipfile or die "Cannot open $zipfile: $UnzipError";
 
@@ -25,7 +30,8 @@ for ($status = 1; $status > 0; $status = $u->nextStream())
 {
     my $name = $u->getHeaderInfo()->{Name};
     from_to($name, $codepage_from, $codepage_to);
-    warn "$status: Processing member $name\n" ;
+    warn "$status: Processing member $name\n";
+	next if ($opts{l});
 
     if (is_dirname($name))
     {
