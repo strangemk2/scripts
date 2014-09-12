@@ -11,11 +11,12 @@ use File::Path qw(make_path);
 use Getopt::Std;
 
 my %opts;
-getopts('lf:t:', \%opts);
+getopts('lxf:t:d:', \%opts);
 my $zipfile = shift @ARGV;
-die "Use: $0 [-l] [-f from_cp] [-t to_cp] filename." unless ($zipfile);
+die "Use: $0 [-l] [-f from_cp] [-t to_cp] [-d directory] [-x] filename." unless ($zipfile);
 my $codepage_from = $opts{f} || "cp932";
 my $codepage_to = $opts{t} || "utf8";
+my $prefix_directory = $opts{d} || "";
 
 my $u = new IO::Uncompress::Unzip $zipfile or die "Cannot open $zipfile: $UnzipError";
 
@@ -23,6 +24,13 @@ sub is_dirname
 {
     my $name = shift;
     substr($name, -1) eq '/';
+}
+
+if ($opts{x} && !$opts{l})
+{
+	my ($name,$path,$suffix) = fileparse($zipfile, qr/\.[^.]*/);
+	make_path($name) unless (-d $name);
+	$prefix_directory .= $name;
 }
 
 my $status;
@@ -33,12 +41,12 @@ for ($status = 1; $status > 0; $status = $u->nextStream())
     warn "$status: Processing member $name\n";
 	next if ($opts{l});
 
+	$name = "$prefix_directory/$name";
     if (is_dirname($name))
     {
         make_path($name) unless (-d $name);
         next;
     }
-
     my $buff;
     my $fh = IO::File->new("> $name") || die "Open file $name for output error";
     $fh->binmode;
