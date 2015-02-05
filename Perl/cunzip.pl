@@ -30,7 +30,7 @@ if ($opts{x} && !$opts{l})
 {
 	my ($name,$path,$suffix) = fileparse($zipfile, qr/\.[^.]*/);
 	make_path($name) unless (-d $name);
-	$prefix_directory .= $name;
+	$prefix_directory .= "$name/";
 }
 
 my $status;
@@ -41,7 +41,7 @@ for ($status = 1; $status > 0; $status = $u->nextStream())
     warn "$status: Processing member $name\n";
 	next if ($opts{l});
 
-	$name = "$prefix_directory/$name";
+	$name = "$prefix_directory$name";
     if (is_dirname($name))
     {
         make_path($name) unless (-d $name);
