@@ -1,0 +1,108 @@
+#!/usr/bin/env python
+
+# last 10 record
+# sum of today
+# sum of this week
+# sum of this month
+
+DATABASE_FILE = 'receipt.sqlite3'
+
+import getopt, sys
+import datetime
+import sqlite3
+
+def local_help():
+    print ("""
+Simple script to manage receipt for JDDC business trip. Xi Juanjie 2015-08-30
+Verion 0.01b
+
+Usage: jddc_reciept [<switches>...] money1 money2 ...
+
+<Switches>
+  -s:       show summary
+  -d:       specific date to insert (default: today)
+  -p:       print sql, do NOT execute
+  -h:       show this help
+""")
+
+def today():
+    return datetime.date.today()
+
+def first_day_of_this_week(today):
+    weekday = today.isoweekday()
+    if weekday == 7:
+        return today
+    else:
+        return today - datetime.timedelta(weekday)
+
+def first_day_of_next_week(today):
+    return first_day_of_this_week(today) + datetime.timedelta(7)
+
+def first_day_of_this_month(today):
+    return today.replace(day = 1)
+
+def first_day_of_next_month(today):
+    ret = today
+    while ret.month == today.month:
+        ret = ret + datetime.timedelta(1)
+    return ret
+
+def to_sql(money, date):
+    return "INSERT INTO receipt (date, money, unit, type) VALUES (\"%s\", %s, \"JPY\", \"PERDIEM\");" % (date, money)
+ 
+try:
+    optlist, args = getopt.getopt(sys.argv[1:], 'hsd:p')
+except getopt.GetoptError as err:
+    print str(err)
+    sys.exit(1)
+
+optdict = dict(optlist)
+
+if (len(optdict) == 0 and len(args) == 0) or optdict.has_key('-h'):
+    local_help()
+    sys.exit(1)
+
+conn = sqlite3.connect(DATABASE_FILE)
+c = conn.cursor()
+
+if optdict.get('-d'):
+    date = optdict['-d']
+else:
+    date = str(today())
+
+for money in args:
+    sql = to_sql(money, date)
+    if optdict.has_key('-p'):
+        print sql
+    else:
+        c.execute(sql)
+
+conn.commit()
+
+if optdict.has_key('-s'):
+    d = today()
+    print ("====================")
+    print ("Last 10 record")
+    print ("====================")
+    for row in c.execute('SELECT * FROM receipt LIMIT 10 OFFSET (SELECT COUNT(*) FROM receipt) - 10'):
+        print (row)
+
+    print ("====================")
+    print ("Sum today")
+    print ("====================")
+    c.execute('SELECT sum(money) FROM receipt WHERE date = ?', (str(d),))
+    print (c.fetchone()[0])
+
+    print ("====================")
+    print ("Sum this week")
+    print ("====================")
+    c.execute('SELECT sum(money) FROM receipt WHERE date >= ? and date < ?', (str(first_day_of_this_week(d)), first_day_of_next_week(d)))
+    print (c.fetchone()[0])
+
+    print ("====================")
+    print ("Sum this month")
+    print ("====================")
+    c.execute('SELECT sum(money) FROM receipt WHERE date >= ? and date < ?', (str(first_day_of_this_month(d)), first_day_of_next_month(d)))
+    print (c.fetchone()[0])
+
+conn.close()
